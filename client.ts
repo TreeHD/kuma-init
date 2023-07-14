@@ -26,7 +26,7 @@ const monitor = {
     docker_host: null,
     expiryNotification: true,
     ignoreTls: true,
-    interval: 60,
+    interval: 30,
     maxredirects: 10,
     maxretries: 0,
     method: "GET",
@@ -37,18 +37,20 @@ const monitor = {
     notificationIDList: {},
     proxyId: null,
     resendInterval: 0,
-    retryInterval: 60,
+    retryInterval: 20,
     upsideDown: false,
+    packetSize: 56,
+    url: "https://",
 }
 
-const socket = io("https://" + options.server, {'transports': ['websocket']});
+const socket = io("https://" + options.server, { 'transports': ['websocket'] });
 const data: any[] = [];
 
 socket.on('connect', async () => {
     console.log('Connected to Uptime Kuma');
 
     // login
-    socket.emit('login', {username: options.username, password: options.password, token: ''}, (res:any) => {
+    socket.emit('login', { username: options.username, password: options.password, token: '' }, (res: any) => {
         if (res.ok) {
             console.log('Logged in successfully');
             process.stdin
@@ -56,9 +58,9 @@ socket.on('connect', async () => {
                 .on('data', (record: any) => {
                     if (options.dryRun !== true) {
                         // add monitor
-                        socket.emit('add', { ...monitor, type: 'http', name: record[0], url: record[1]});
+                        socket.emit('add', { ...monitor, type: 'port', port: 8291, name: record[0], hostname: record[1] });
                     } else {
-                        console.log('Dry run: would add monitor', { type: 'http', name: record[0], url: record[1]});
+                        console.log('Dry run: would add monitor', { type: 'port', name: record[0], hostname: record[1] });
                     }
                 })
                 .on('end', () => {
